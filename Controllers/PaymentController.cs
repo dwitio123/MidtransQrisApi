@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MidtransQrisApi.Data;
@@ -108,9 +109,15 @@ public class PaymentsController : ControllerBase
 				.GetProperty("transaction_id")
 				.GetString();
 
-			var amount = root
-				.GetProperty("gross_amount")
-				.GetDecimal();
+			// Midtrans mengirim gross_amount sebagai teks, contoh "50000.00"
+			var grossAmount = root.GetProperty("gross_amount");
+
+			var amount = grossAmount.ValueKind == JsonValueKind.String
+				? decimal.Parse(
+					grossAmount.GetString()!,
+					System.Globalization.CultureInfo.InvariantCulture
+				)
+				: grossAmount.GetDecimal();
 
 			// Pastikan transaksi sesuai dengan database
 			if (
